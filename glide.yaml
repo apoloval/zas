@@ -1,0 +1,3 @@
+package: github.com/apoloval/za
+import:
+- package: github.com/stretchr/testify
