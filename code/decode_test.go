@@ -19,16 +19,18 @@ func TestDecode(t *testing.T) {
 			expected: NewNularyInstruction(NOP),
 		},
 		{
-			name:     "0x01 => ld bc, i16",
+			name:     "0x01 => ld bc, **",
 			bytes:    []byte{0x01, 0xcd, 0xab},
 			expected: NewBinaryInstruction(LD, BC, 0xabcd),
 		},
 	} {
 		decoder := MachineDecoder{}
 		t.Run(test.name, func(t *testing.T) {
-			actual, err := decoder.Decode(bytes.NewReader(test.bytes))
+			var actual Instruction
+			nread, err := decoder.Decode(bytes.NewReader(test.bytes), &actual)
 			assert.NoError(t, err)
 			assert.Equal(t, test.expected, actual)
+			assert.Equal(t, len(test.bytes), nread)
 		})
 	}
 }
