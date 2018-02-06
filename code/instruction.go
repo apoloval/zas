@@ -5,6 +5,16 @@ type Instruction struct {
 	Operands  [2]Operand
 }
 
+// Dest returns the destination operand
+func (inst *Instruction) Dest() *Operand {
+	return &inst.Operands[0]
+}
+
+// Src  returns the source operand
+func (inst *Instruction) Src() *Operand {
+	return &inst.Operands[1]
+}
+
 // NewNularyInstruction creates a new instruction with no operands
 func NewNularyInstruction(opCode OpCode) Instruction {
 	return Instruction{Operation: opCode}

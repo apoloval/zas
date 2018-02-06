@@ -2,7 +2,6 @@ package code
 
 import (
 	"encoding/binary"
-	"fmt"
 	"io"
 )
 
@@ -23,20 +22,36 @@ func (d MachineDecoder) Decode(r io.ByteReader) (Instruction, error) {
 	if err != nil {
 		return Instruction{}, err
 	}
-	switch b {
-	case 0x00:
-		return NewNularyInstruction(NOP), nil
-	case 0x01:
-		imm, err := d.decodeInt16(r)
-		if err != nil {
-			return Instruction{}, err
-		}
-		return NewBinaryInstruction(LD, BC, imm), nil
+	entry := decodeTable[b]
+	if entry.cont != nil {
+		entry.cont(r, &entry.proto)
 	}
-	return Instruction{}, fmt.Errorf("illegal instruction code in 0x%x", b)
+	return entry.proto, nil
 }
 
-func (MachineDecoder) decodeInt16(r io.ByteReader) (Operand, error) {
+type decodeContinuation = func(io.ByteReader, *Instruction) error
+
+var decodeTable = []struct {
+	proto Instruction
+	cont  decodeContinuation
+}{
+	// 0x00: nop
+	{
+		proto: NewNularyInstruction(NOP),
+	},
+	// 0x01: ld bc, **
+	{
+		proto: NewBinaryInstruction(LD, BC, 0),
+		cont:  decodeInt16Source,
+	},
+}
+
+func decodeInt16Source(r io.ByteReader, inst *Instruction) (err error) {
+	*inst.Src(), err = decodeInt16(r)
+	return
+}
+
+func decodeInt16(r io.ByteReader) (Operand, error) {
 	buf := [2]byte{}
 	var err error
 	buf[0], err = r.ReadByte()
